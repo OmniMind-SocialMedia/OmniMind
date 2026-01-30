@@ -1,65 +1,79 @@
 /// <reference types="node" />
-import prisma from '../src/config/database.js';
+import { PrismaClient } from './generated-client/index.js';
 import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
 
 async function main() {
     console.log('Seeding database...');
 
     // Create admin user
     const adminPassword = await bcrypt.hash('admin123', 12);
-    const admin = await prisma.user.upsert({
-        where: { email: 'admin@omnimind.io' },
-        update: {},
-        create: {
-            email: 'admin@omnimind.io',
-            passwordHash: adminPassword,
-            displayName: 'System Admin',
-            role: 'SUPER_ADMIN',
-            status: 'ACTIVE',
-        },
-    });
+    let admin = await prisma.user.findFirst({ where: { email: 'admin@omnimind.io' } });
+    if (!admin) {
+        admin = await prisma.user.create({
+            data: {
+                email: 'admin@omnimind.io',
+                passwordHash: adminPassword,
+                displayName: 'System Admin',
+                role: 'SUPER_ADMIN',
+                status: 'ACTIVE',
+            },
+        });
+    }
     console.log('Created admin user:', admin.email);
 
     // Create demo users
     const userPassword = await bcrypt.hash('password123', 12);
 
-    const john = await prisma.user.upsert({
-        where: { email: 'john@example.com' },
-        update: {},
-        create: {
-            email: 'john@example.com',
-            passwordHash: userPassword,
-            displayName: 'John Doe',
-            role: 'USER',
-            status: 'ACTIVE',
-        },
-    });
+    let john = await prisma.user.findFirst({ where: { email: 'john@example.com' } });
+    if (!john) {
+        john = await prisma.user.create({
+            data: {
+                email: 'john@example.com',
+                passwordHash: userPassword,
+                displayName: 'John Doe',
+                role: 'USER',
+                status: 'ACTIVE',
+            },
+        });
+    }
 
-    const jane = await prisma.user.upsert({
-        where: { email: 'jane@example.com' },
-        update: {},
-        create: {
-            email: 'jane@example.com',
-            passwordHash: userPassword,
-            displayName: 'Jane Smith',
-            role: 'REVIEWER',
-            status: 'ACTIVE',
-        },
-    });
+    let jane = await prisma.user.findFirst({ where: { email: 'jane@example.com' } });
+    if (!jane) {
+        jane = await prisma.user.create({
+            data: {
+                email: 'jane@example.com',
+                passwordHash: userPassword,
+                displayName: 'Jane Smith',
+                role: 'REVIEWER',
+                status: 'ACTIVE',
+            },
+        });
+    }
 
     console.log('Created demo users');
 
-    // Create reputation scores
-    await prisma.reputationScore.createMany({
-        data: [
-            { userId: admin.id, domain: 'general', score: 1000, rank: 'STEWARD' },
-            { userId: john.id, domain: 'general', score: 450, rank: 'EXPERT' },
-            { userId: john.id, domain: 'finance', score: 320, rank: 'CONTRIBUTOR' },
-            { userId: jane.id, domain: 'general', score: 380, rank: 'CONTRIBUTOR' },
-            { userId: jane.id, domain: 'legal', score: 280, rank: 'CONTRIBUTOR' },
-        ],
-        skipDuplicates: true,
-    });
+    // Create reputation scores (one by one to avoid transaction if createMany is not supported or safe)
+    // Actually createMany is supported on Mongo usually, but let's be safe.
+    const reputationData = [
+        { userId: admin!.id, domain: 'general', score: 1000, rank: 'STEWARD' },
+        { userId: john!.id, domain: 'general', score: 450, rank: 'EXPERT' },
+        { userId: john!.id, domain: 'finance', score: 320, rank: 'CONTRIBUTOR' },
+        { userId: jane!.id, domain: 'general', score: 380, rank: 'CONTRIBUTOR' },
+        { userId: jane!.id, domain: 'legal', score: 280, rank: 'CONTRIBUTOR' },
+    ];
+
+    for (const rep of reputationData) {
+        // cast rank to any to avoid TS issues if enum import is missing
+        await prisma.reputationScore.findFirst({
+            where: { userId: rep.userId, domain: rep.domain }
+        }).then(async (exists) => {
+            if (!exists) {
+                await prisma.reputationScore.create({ data: rep as any });
+            }
+        });
+    }
     console.log('Created reputation scores');
 
     // Create sample experts
@@ -201,14 +215,18 @@ async function main() {
     }
 
     // Create system settings
-    await prisma.systemSetting.createMany({
-        data: [
-            { key: 'debate.minArgumentLength', value: { claim: 10, reasoning: 20 } },
-            { key: 'reputation.decayRate', value: { daily: 0.01, inactivityDays: 30 } },
-            { key: 'expert.approvalThreshold', value: { minAuthorities: 3 } },
-        ],
-        skipDuplicates: true,
-    });
+    const settings = [
+        { key: 'debate.minArgumentLength', value: { claim: 10, reasoning: 20 } },
+        { key: 'reputation.decayRate', value: { daily: 0.01, inactivityDays: 30 } },
+        { key: 'expert.approvalThreshold', value: { minAuthorities: 3 } },
+    ];
+
+    for (const setting of settings) {
+        const exists = await prisma.systemSetting.findUnique({ where: { key: setting.key } });
+        if (!exists) {
+            await prisma.systemSetting.create({ data: setting });
+        }
+    }
     console.log('Created system settings');
 
     console.log('\n✅ Database seeded successfully!');

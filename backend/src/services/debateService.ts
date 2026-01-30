@@ -35,7 +35,7 @@ export const debateService = {
      */
     async create(userId: string, input: CreateDebateInput) {
         // Verify expert exists
-        const expert = await prisma.expert.findUnique({
+        const expert = await prisma.expert.findFirst({
             where: { id: input.expertId },
         });
 
@@ -77,7 +77,7 @@ export const debateService = {
      * Get debate by ID with arguments
      */
     async getById(id: string) {
-        const debate = await prisma.debate.findUnique({
+        const debate = await prisma.debate.findFirst({
             where: { id },
             include: {
                 expert: {
@@ -196,7 +196,7 @@ export const debateService = {
      */
     async addArgument(userId: string, input: CreateArgumentInput) {
         // Verify debate exists and is open
-        const debate = await prisma.debate.findUnique({
+        const debate = await prisma.debate.findFirst({
             where: { id: input.debateId },
         });
 
@@ -210,7 +210,7 @@ export const debateService = {
 
         // If parent argument specified, verify it exists
         if (input.parentArgumentId) {
-            const parent = await prisma.argument.findUnique({
+            const parent = await prisma.argument.findFirst({
                 where: { id: input.parentArgumentId },
             });
 
@@ -225,46 +225,43 @@ export const debateService = {
         });
         const totalReputation = reputationScores.reduce((sum: number, r: { score: number }) => sum + r.score, 0);
 
-        // Create argument with evidence in transaction
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const argument = await prisma.$transaction(async (tx: any) => {
-            const newArgument = await tx.argument.create({
-                data: {
-                    debateId: input.debateId,
-                    parentArgumentId: input.parentArgumentId,
-                    type: input.type,
-                    claim: input.claim,
-                    reasoning: input.reasoning,
-                    authorReputationAtTime: totalReputation,
-                    createdById: userId,
-                },
-            });
-
-            // Add evidence if provided
-            if (input.evidence && input.evidence.length > 0) {
-                await tx.evidence.createMany({
-                    data: input.evidence.map((e) => ({
-                        argumentId: newArgument.id,
-                        type: e.type,
-                        content: e.content,
-                        sourceUrl: e.sourceUrl,
-                    })),
-                });
-            }
-
-            // Return with relations
-            return tx.argument.findUnique({
-                where: { id: newArgument.id },
-                include: {
-                    createdBy: {
-                        select: { id: true, displayName: true },
-                    },
-                    evidence: true,
-                },
-            });
+        // Create argument (without transaction)
+        const newArgument = await prisma.argument.create({
+            data: {
+                debateId: input.debateId,
+                parentArgumentId: input.parentArgumentId,
+                type: input.type,
+                claim: input.claim,
+                reasoning: input.reasoning,
+                authorReputationAtTime: totalReputation,
+                createdById: userId,
+            },
         });
 
-        return argument;
+        // Add evidence if provided
+        if (input.evidence && input.evidence.length > 0) {
+            await prisma.evidence.createMany({
+                data: input.evidence.map((e) => ({
+                    argumentId: newArgument.id,
+                    type: e.type,
+                    content: e.content,
+                    sourceUrl: e.sourceUrl,
+                })),
+            });
+        }
+
+        // Return with relations
+        return prisma.argument.findFirst({
+            where: { id: newArgument.id },
+            include: {
+                createdBy: {
+                    select: { id: true, displayName: true },
+                },
+                evidence: true,
+            },
+        });
+
+
     },
 
     /**

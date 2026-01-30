@@ -34,8 +34,10 @@ export default function Login() {
         try {
             await login(data.email, data.password);
             navigate(from, { replace: true });
-        } catch (err) {
-            setError('Invalid credentials. Please try again.');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+            const message = err.response?.data?.error || 'Invalid credentials. Please try again.';
+            setError(message);
         }
     };
 
@@ -107,7 +109,7 @@ export default function Login() {
 
                 <div className="login-footer">
                     <p>
-                        New to OmniMind? <a href="#">Request access</a>
+                        New to OmniMind? <Link to="/register">Create an account</Link>
                     </p>
                 </div>
             </div>

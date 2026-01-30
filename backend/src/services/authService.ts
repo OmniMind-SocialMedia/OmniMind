@@ -36,7 +36,7 @@ export const authService = {
      */
     async register(input: RegisterInput): Promise<AuthResponse> {
         // Check if user already exists
-        const existingUser = await prisma.user.findUnique({
+        const existingUser = await prisma.user.findFirst({
             where: { email: input.email.toLowerCase() },
         });
 
@@ -88,8 +88,8 @@ export const authService = {
      * Login user
      */
     async login(input: LoginInput): Promise<AuthResponse> {
-        // Find user
-        const user = await prisma.user.findUnique({
+        // Find user using findFirst to avoid aggregate pipeline issues on standalone MongoDB
+        const user = await prisma.user.findFirst({
             where: { email: input.email.toLowerCase() },
         });
 
@@ -109,11 +109,22 @@ export const authService = {
             throw errors.unauthorized('Invalid email or password');
         }
 
-        // Update last login
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLoginAt: new Date() },
-        });
+        // Update last login - wrapped in try-catch to not block login if update fails
+        // This is a workaround for standalone MongoDB which doesn't support transactions
+        try {
+            await prisma.$runCommandRaw({
+                update: 'User',
+                updates: [
+                    {
+                        q: { _id: { $oid: user.id } },
+                        u: { $set: { lastLoginAt: new Date() } },
+                    },
+                ],
+            });
+        } catch (updateError) {
+            console.warn('Failed to update lastLoginAt:', updateError);
+            // Non-blocking - continue with login
+        }
 
         // Generate token
         const token = this.generateToken(user.id, user.email, user.role);
@@ -138,7 +149,7 @@ export const authService = {
      * Get current user profile
      */
     async getProfile(userId: string) {
-        const user = await prisma.user.findUnique({
+        const user = await prisma.user.findFirst({
             where: { id: userId },
             select: {
                 id: true,

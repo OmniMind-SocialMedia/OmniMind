@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../../prisma/generated-client/index.js';
 
 // Global Prisma client for development (avoids too many connections during hot reload)
 const globalForPrisma = globalThis as unknown as {

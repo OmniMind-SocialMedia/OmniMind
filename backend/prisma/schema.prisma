@@ -3,10 +3,12 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated-client"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -14,7 +16,7 @@ datasource db {
 // ============================================
 
 model User {
-  id            String   @id @default(uuid())
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   email         String   @unique
   passwordHash  String
   displayName   String
@@ -34,23 +36,21 @@ model User {
   auditEvents       AuditEvent[]
   sessions          Session[]
   
-  @@index([email])
   @@index([status])
 }
 
 model Session {
-  id           String   @id @default(uuid())
-  userId       String
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
   token        String   @unique
   expiresAt    DateTime
   createdAt    DateTime @default(now())
   ipAddress    String?
   userAgent    String?
   
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: NoAction)
   
   @@index([userId])
-  @@index([token])
 }
 
 enum UserRole {
@@ -72,11 +72,11 @@ enum UserStatus {
 // ============================================
 
 model Expert {
-  id               String       @id @default(uuid())
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
   slug             String       @unique
-  currentVersionId String?
+  currentVersionId String?      @db.ObjectId
   status           ExpertStatus @default(DRAFT)
-  createdById      String
+  createdById      String       @db.ObjectId
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   
@@ -84,23 +84,25 @@ model Expert {
   createdBy        User           @relation(fields: [createdById], references: [id])
   versions         ExpertVersion[]
   debates          Debate[]
+  
+  // Custom M:N relation for dependencies
+  // In MongoDB, we model this differently or use an explicit join collection properly mapped
   dependencies     ExpertDependency[] @relation("DependentExpert")
   dependents       ExpertDependency[] @relation("RequiredExpert")
   
-  @@index([slug])
   @@index([status])
   @@index([createdById])
 }
 
 model ExpertVersion {
-  id              String   @id @default(uuid())
-  expertId        String
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  expertId        String   @db.ObjectId
   versionNumber   Int
   scope           Json     // { domain, subdomains, inputTypes, outputTypes, limitations }
   permissions     Json     // { invokeRoles, editRoles, approveRoles, viewRoles }
   logicDefinition Json     // The actual expert logic/rules
   changeReason    String
-  createdById     String
+  createdById     String   @db.ObjectId
   createdAt       DateTime @default(now())
   
   // Metrics (updated periodically)
@@ -109,7 +111,7 @@ model ExpertVersion {
   lastInvokedAt   DateTime?
   
   // Relations
-  expert          Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  expert          Expert   @relation(fields: [expertId], references: [id], onDelete: NoAction)
   createdBy       User     @relation(fields: [createdById], references: [id])
   
   @@unique([expertId, versionNumber])
@@ -118,14 +120,14 @@ model ExpertVersion {
 }
 
 model ExpertDependency {
-  id                String   @id @default(uuid())
-  dependentExpertId String
-  requiredExpertId  String
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  dependentExpertId String   @db.ObjectId
+  requiredExpertId  String   @db.ObjectId
   dependencyType    DependencyType @default(REQUIRES)
   createdAt         DateTime @default(now())
   
-  dependentExpert   Expert   @relation("DependentExpert", fields: [dependentExpertId], references: [id], onDelete: Cascade)
-  requiredExpert    Expert   @relation("RequiredExpert", fields: [requiredExpertId], references: [id], onDelete: Cascade)
+  dependentExpert   Expert   @relation("DependentExpert", fields: [dependentExpertId], references: [id], onDelete: NoAction)
+  requiredExpert    Expert   @relation("RequiredExpert", fields: [requiredExpertId], references: [id], onDelete: NoAction)
   
   @@unique([dependentExpertId, requiredExpertId])
   @@index([dependentExpertId])
@@ -151,13 +153,13 @@ enum DependencyType {
 // ============================================
 
 model Debate {
-  id                  String       @id @default(uuid())
-  expertId            String
+  id                  String       @id @default(auto()) @map("_id") @db.ObjectId
+  expertId            String       @db.ObjectId
   topic               String
   description         String?
   status              DebateStatus @default(OPEN)
   resolutionCriteria  String
-  createdById         String
+  createdById         String       @db.ObjectId
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
   resolvedAt          DateTime?
@@ -174,9 +176,9 @@ model Debate {
 }
 
 model Argument {
-  id                    String         @id @default(uuid())
-  debateId              String
-  parentArgumentId      String?
+  id                    String         @id @default(auto()) @map("_id") @db.ObjectId
+  debateId              String         @db.ObjectId
+  parentArgumentId      String?        @db.ObjectId
   type                  ArgumentType
   claim                 String
   reasoning             String
@@ -184,13 +186,13 @@ model Argument {
   validationStatus      ValidationStatus @default(PENDING)
   validationReason      String?
   authorReputationAtTime Float
-  createdById           String
+  createdById           String         @db.ObjectId
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
   
   // Relations
-  debate                Debate         @relation(fields: [debateId], references: [id], onDelete: Cascade)
-  parentArgument        Argument?      @relation("ArgumentReplies", fields: [parentArgumentId], references: [id])
+  debate                Debate         @relation(fields: [debateId], references: [id], onDelete: NoAction)
+  parentArgument        Argument?      @relation("ArgumentReplies", fields: [parentArgumentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   childArguments        Argument[]     @relation("ArgumentReplies")
   createdBy             User           @relation(fields: [createdById], references: [id])
   evidence              Evidence[]
@@ -202,15 +204,15 @@ model Argument {
 }
 
 model Evidence {
-  id                 String             @id @default(uuid())
-  argumentId         String
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+  argumentId         String             @db.ObjectId
   type               EvidenceType
   content            String
   sourceUrl          String?
   verificationStatus VerificationStatus @default(UNVERIFIED)
   createdAt          DateTime           @default(now())
   
-  argument           Argument           @relation(fields: [argumentId], references: [id], onDelete: Cascade)
+  argument           Argument           @relation(fields: [argumentId], references: [id], onDelete: NoAction)
   
   @@index([argumentId])
 }
@@ -262,8 +264,8 @@ enum VerificationStatus {
 // ============================================
 
 model ReputationScore {
-  id               String   @id @default(uuid())
-  userId           String
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String   @db.ObjectId
   domain           String
   score            Float    @default(0)
   rank             ReputationRank @default(NOVICE)
@@ -272,7 +274,7 @@ model ReputationScore {
   lastActiveAt     DateTime @default(now())
   lastCalculatedAt DateTime @default(now())
   
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id], onDelete: NoAction)
   history          ReputationEvent[]
   
   @@unique([userId, domain])
@@ -282,16 +284,16 @@ model ReputationScore {
 }
 
 model ReputationEvent {
-  id                String   @id @default(uuid())
-  reputationScoreId String
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  reputationScoreId String   @db.ObjectId
   type              ReputationEventType
   delta             Float
   reason            String
   relatedEntityType String?
-  relatedEntityId   String?
+  relatedEntityId   String?  @db.ObjectId
   createdAt         DateTime @default(now())
   
-  reputationScore   ReputationScore @relation(fields: [reputationScoreId], references: [id], onDelete: Cascade)
+  reputationScore   ReputationScore @relation(fields: [reputationScoreId], references: [id], onDelete: NoAction)
   
   @@index([reputationScoreId])
   @@index([createdAt])
@@ -320,13 +322,13 @@ enum ReputationEventType {
 // ============================================
 
 model AuditEvent {
-  id               String   @id @default(uuid())
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
   timestamp        DateTime @default(now())
-  actorId          String?
+  actorId          String?  @db.ObjectId
   actorType        ActorType
   action           String
   resourceType     String
-  resourceId       String?
+  resourceId       String?  @db.ObjectId
   previousState    Json?
   newState         Json?
   metadata         Json?
@@ -343,13 +345,11 @@ model AuditEvent {
 }
 
 model SystemSetting {
-  id        String   @id @default(uuid())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   key       String   @unique
   value     Json
   updatedAt DateTime @updatedAt
-  updatedBy String?
-  
-  @@index([key])
+  updatedBy String?  @db.ObjectId
 }
 
 enum ActorType {

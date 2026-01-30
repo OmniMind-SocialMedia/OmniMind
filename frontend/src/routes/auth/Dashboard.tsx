@@ -1,20 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../stores/authStore';
+import { expertApi } from '../../lib/api/experts';
+import { debateApi } from '../../lib/api/debates';
 import './Dashboard.css';
 
-// Mock data for demonstration
-const mockExperts = [
-    { id: '1', name: 'Financial Analysis', version: '4.2', accuracy: 94.7, status: 'active' },
-    { id: '2', name: 'Legal Compliance', version: '2.1', accuracy: 91.2, status: 'active' },
-    { id: '3', name: 'Risk Assessment', version: '3.0', accuracy: 88.5, status: 'deprecated' },
-];
-
-const mockDebates = [
-    { id: '1', topic: 'Improve accuracy threshold logic', expert: 'Financial Analysis', status: 'open', participants: 5 },
-    { id: '2', topic: 'Add regulatory edge cases', expert: 'Legal Compliance', status: 'voting', participants: 8 },
-    { id: '3', topic: 'Refactor risk scoring model', expert: 'Risk Assessment', status: 'resolved', participants: 12 },
-];
-
+// Mock data for missing backend endpoints (Activity, Stats)
 const mockActivity = [
     { id: '1', action: 'Argument validated', expert: 'Financial Analysis', time: '2 hours ago' },
     { id: '2', action: 'Debate resolution', expert: 'Legal Compliance', time: '5 hours ago' },
@@ -23,6 +14,19 @@ const mockActivity = [
 
 export default function Dashboard() {
     const { user } = useAuthStore();
+
+    const { data: expertsData, isLoading: expertsLoading } = useQuery({
+        queryKey: ['experts', 'dashboard'],
+        queryFn: () => expertApi.list({ limit: 3 }),
+    });
+
+    const { data: debatesData, isLoading: debatesLoading } = useQuery({
+        queryKey: ['debates', 'dashboard'],
+        queryFn: () => debateApi.list({ limit: 3, status: 'OPEN' }),
+    });
+
+    const experts = expertsData?.data || [];
+    const debates = debatesData?.data || [];
 
     return (
         <div className="dashboard container">
@@ -48,22 +52,28 @@ export default function Dashboard() {
                         <h2>Your Experts</h2>
                         <Link to="/experts" className="view-all">View all →</Link>
                     </div>
-                    <div className="experts-list">
-                        {mockExperts.map((expert) => (
-                            <Link key={expert.id} to={`/experts/${expert.id}`} className="expert-card">
-                                <div className="expert-info">
-                                    <h3>{expert.name}</h3>
-                                    <span className="version">v{expert.version}</span>
-                                </div>
-                                <div className="expert-meta">
-                                    <span className={`status-badge ${expert.status}`}>
-                                        {expert.status}
-                                    </span>
-                                    <span className="accuracy">{expert.accuracy}%</span>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
+                    {expertsLoading ? (
+                        <div className="loading-placeholder">Loading experts...</div>
+                    ) : experts.length === 0 ? (
+                        <div className="empty-state">No experts found. <Link to="/experts/new">Create one</Link></div>
+                    ) : (
+                        <div className="experts-list">
+                            {experts.map((expert) => (
+                                <Link key={expert.id} to={`/experts/${expert.id}`} className="expert-card">
+                                    <div className="expert-info">
+                                        <h3>{expert.slug}</h3>
+                                        <span className="version">v{expert.currentVersion?.number || 0}</span>
+                                    </div>
+                                    <div className="expert-meta">
+                                        <span className={`status-badge ${expert.status?.toLowerCase()}`}>
+                                            {expert.status}
+                                        </span>
+                                        <span className="accuracy">{expert.currentVersion?.accuracyScore || 0}%</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </section>
 
                 {/* Active Debates Section */}
@@ -72,22 +82,28 @@ export default function Dashboard() {
                         <h2>Active Debates</h2>
                         <Link to="/debates" className="view-all">View all →</Link>
                     </div>
-                    <div className="debates-list">
-                        {mockDebates.map((debate) => (
-                            <Link key={debate.id} to={`/debates/${debate.id}`} className="debate-card">
-                                <div className="debate-info">
-                                    <h4>{debate.topic}</h4>
-                                    <span className="expert-name">{debate.expert}</span>
-                                </div>
-                                <div className="debate-meta">
-                                    <span className={`status-badge ${debate.status}`}>
-                                        {debate.status}
-                                    </span>
-                                    <span className="participants">{debate.participants} participants</span>
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
+                    {debatesLoading ? (
+                        <div className="loading-placeholder">Loading debates...</div>
+                    ) : debates.length === 0 ? (
+                        <div className="empty-state">No active debates. <Link to="/debates/new">Start one</Link></div>
+                    ) : (
+                        <div className="debates-list">
+                            {debates.map((debate) => (
+                                <Link key={debate.id} to={`/debates/${debate.id}`} className="debate-card">
+                                    <div className="debate-info">
+                                        <h4>{debate.topic}</h4>
+                                        <span className="expert-name">{debate.expert?.slug || 'Unknown Expert'}</span>
+                                    </div>
+                                    <div className="debate-meta">
+                                        <span className={`status-badge ${debate.status?.toLowerCase()}`}>
+                                            {debate.status}
+                                        </span>
+                                        <span className="participants">{debate.participantCount || 0} participants</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </section>
 
                 {/* Recent Activity */}
