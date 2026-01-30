@@ -1,0 +1,295 @@
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-8);
+}
+
+.dashboard-header h1 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-2);
+}
+
+.dashboard-header p {
+    color: var(--color-text-tertiary);
+}
+
+.header-stats {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-4) var(--space-6);
+    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-700));
+    border-radius: var(--radius-xl);
+    color: var(--color-text-inverse);
+}
+
+.stat-value {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    opacity: 0.8;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+}
+
+.dashboard-section {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-5);
+}
+
+.section-header h2 {
+    font-size: var(--font-size-lg);
+}
+
+.view-all {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary-600);
+    font-weight: var(--font-weight-medium);
+}
+
+/* Experts List */
+.experts-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.expert-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+    color: inherit;
+}
+
+.expert-card:hover {
+    background: var(--color-bg-tertiary);
+    transform: translateX(4px);
+}
+
+.expert-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.expert-info h3 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+}
+
+.version {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    background: var(--color-bg-tertiary);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+.expert-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.accuracy {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-success-600);
+}
+
+/* Status Badges */
+.status-badge {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-full);
+    text-transform: capitalize;
+}
+
+.status-badge.active {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--color-success-600);
+}
+
+.status-badge.deprecated {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--color-warning-600);
+}
+
+.status-badge.open {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-primary-600);
+}
+
+.status-badge.voting {
+    background: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
+}
+
+.status-badge.resolved {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--color-success-600);
+}
+
+/* Debates List */
+.debates-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.debate-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+    color: inherit;
+}
+
+.debate-card:hover {
+    background: var(--color-bg-tertiary);
+    transform: translateX(4px);
+}
+
+.debate-info h4 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    margin-bottom: var(--space-1);
+}
+
+.expert-name {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.debate-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-1);
+}
+
+.participants {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+/* Activity List */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    color: var(--color-primary-500);
+}
+
+.activity-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-action {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.activity-expert {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.activity-time {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-4);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-lg);
+}
+
+.stat-number {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary-600);
+}
+
+.stat-desc {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-header {
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

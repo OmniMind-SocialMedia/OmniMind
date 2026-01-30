@@ -1,0 +1,199 @@
+.login-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+}
+
+/* Login Container */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-12);
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: var(--space-8);
+}
+
+.login-header .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-8);
+}
+
+.login-header h1 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-2);
+}
+
+.login-header p {
+    color: var(--color-text-tertiary);
+}
+
+/* Form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.form-group label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+}
+
+.form-group input {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--font-size-base);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+}
+
+.form-group input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input[aria-invalid="true"] {
+    border-color: var(--color-error-500);
+}
+
+.field-error {
+    font-size: var(--font-size-sm);
+    color: var(--color-error-500);
+}
+
+.error-message {
+    padding: var(--space-3) var(--space-4);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--color-error-500);
+    border-radius: var(--radius-lg);
+    color: var(--color-error-600);
+    font-size: var(--font-size-sm);
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-primary-600);
+}
+
+.forgot-link {
+    font-size: var(--font-size-sm);
+    color: var(--color-primary-600);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+.login-footer {
+    margin-top: var(--space-8);
+    text-align: center;
+}
+
+.login-footer p {
+    font-size: var(--font-size-sm);
+}
+
+.login-footer a {
+    color: var(--color-primary-600);
+    font-weight: var(--font-weight-medium);
+}
+
+/* Side Panel */
+.login-side {
+    background: linear-gradient(135deg, var(--color-primary-800), var(--color-primary-900));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-12);
+}
+
+.side-content {
+    max-width: 400px;
+    text-align: center;
+}
+
+.side-content blockquote {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-inverse);
+    font-style: italic;
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--space-12);
+}
+
+.side-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.side-feature {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    color: var(--color-primary-200);
+    font-weight: var(--font-weight-medium);
+}
+
+.side-feature .feature-icon {
+    font-size: var(--font-size-lg);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .login-page {
+        grid-template-columns: 1fr;
+    }
+
+    .login-side {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .login-container {
+        padding: var(--space-6);
+    }
+}
